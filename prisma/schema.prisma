@@ -2,7 +2,7 @@
 // For real deployment, switch provider to "postgresql" and point DATABASE_URL
 // at a free Postgres instance (Neon, Supabase, Railway) — see README.
 datasource db {
-  provider = "sqlite"
+  provider = "postgres"
   url      = env("DATABASE_URL")
 }
 
@@ -14,11 +14,11 @@ model Letter {
   id             String    @id @default(cuid())
   userId         String
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type           String    // "COMMIT" | "CONNECT"
-  timelineKey    String    // "12m" | "3y" | "5y" | "10y" | "20y" | "50y" | "custom"
+  type           String // "COMMIT" | "CONNECT"
+  timelineKey    String // "12m" | "3y" | "5y" | "10y" | "20y" | "50y" | "custom"
   targetDate     DateTime
   title          String
-  sections       String    // JSON-stringified [{ prompt, text }]
+  sections       String // JSON-stringified [{ prompt, text }]
   recipientEmail String
   status         String    @default("scheduled") // "draft" | "scheduled" | "sent"
   scheduledAt    DateTime? // when status first became "scheduled" — anchors the edit-lock grace period
