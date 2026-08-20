@@ -4,8 +4,9 @@ Write a letter to (or from) your future self. Choose a timeline — 12 months
 out to 50 years, or a custom date — and it arrives by email exactly then.
 
 Two tools, one data model underneath:
+
 - **Future Self Commit** — write to your future self about who you are now and what you're committing to.
-- **Future Self Connect** — write *as* your future self, describing that life and sending advice back.
+- **Future Self Connect** — write _as_ your future self, describing that life and sending advice back.
 
 Letters are private to the account that wrote them, and lock against
 editing 24 hours after being scheduled — see **Auth** and **Sealing**
@@ -23,8 +24,8 @@ below.
 
 ```bash
 npm install
-cp .env.example .env       # then fill in the values, see notes below
-npm run db:push            # creates the local SQLite DB from prisma/schema.prisma
+cp .env.example .env
+npm run db:push
 npm run dev
 ```
 
@@ -68,35 +69,9 @@ GET /api/cron/send-due?secret=YOUR_CRON_SECRET
 ```
 
 To test end-to-end: sign in, write a letter, choose **Custom date**, pick
-*today*, save it, then hit that URL (in a browser or `curl`). It'll find
+_today_, save it, then hit that URL (in a browser or `curl`). It'll find
 the letter, email it, and mark it `sent`. In real use an external
 scheduler hits this URL automatically — see Deploying below.
-
-## Sealing (edit lock)
-
-A letter stays editable for **24 hours** after it's first scheduled, then
-locks — you can still view, export, or delete it, but not change the
-content, timeline, or recipient. This is deliberate: the point of
-"committing" to something is that it stops being negotiable a day later.
-
-Mechanically: `scheduledAt` is stamped once, the first time a letter's
-status becomes `"scheduled"` (on creation, or later via "Seal & schedule"
-from a draft). Re-saving during the grace period does **not** push the
-lock back — otherwise you could dodge it forever by editing every 23
-hours. `lib/timeline.ts` has `isSealed()` / `sealTime()`; both the API
-(`app/api/letters/[id]/route.ts`, server-side, authoritative) and the
-letter detail page (client-side, for the UI) use them.
-
-Letters created before this feature shipped have no `scheduledAt`. The
-`GET` route self-heals this the first time such a letter is opened,
-backfilling `scheduledAt` from `createdAt` — so old scheduled letters
-start their 24-hour clock retroactively from when they were written, the
-first time anyone looks at them after upgrading.
-
-Deleting a sealed letter is still allowed — sealing only locks *editing*,
-since preventing deletion wasn't part of the ask and adds a second kind of
-lock to reason about. Worth revisiting if the product leans harder into
-"you can't back out of this."
 
 ## Deploying for free
 
@@ -114,13 +89,6 @@ lock to reason about. Worth revisiting if the product leans harder into
 
 A once-daily check is plenty here: nobody needs their 5-year letter to the
 minute, and it keeps everything on free tiers.
-
-> **Schema note:** adding auth made `userId` a required field on `Letter`.
-> If you already have letters in a local `dev.db` from before this change,
-> `prisma db push` will refuse to apply it against existing rows. Easiest
-> path for a prototype: delete `prisma/dev.db` and start fresh. If you
-> need to keep existing letters, back-fill a `userId` for them manually
-> (assign them all to your own account's id) before running `db:push`.
 
 ## Project structure
 
@@ -150,19 +118,6 @@ and the same scheduling/delivery pipeline — they only differ in which
 prompts `lib/timeline.ts` shows and how the email is voiced. That's
 deliberate: it's one real feature (a scheduled letter to yourself) wearing
 two framings, not two separate systems.
-
-## Design notes
-
-Palette and type were chosen to avoid the generic "AI app" look (cream +
-terracotta, or black + neon): a muted paper/ink base with a "dusk" gradient
-that runs from near-slate-blue to deep indigo. The signature element is the
-small dot next to every letter and timeline option — its color literally
-deepens the further out the timeline reaches, so a 12-month letter and a
-50-year letter *look* different distances away, not just labeled
-differently. The wax-seal-colored button ("Seal & schedule") leans into the
-letter metaphor rather than a generic "Submit" — and now that letters
-actually seal shut after 24 hours, the button's name is literal, not just
-thematic.
 
 ## What I'd extend next
 
